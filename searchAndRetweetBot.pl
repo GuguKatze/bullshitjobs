@@ -136,8 +136,7 @@ sub isaGoodTweet {
   return 0 if $matches < 1;
 
   # We found a potential tweet!
-  my $timestamp =  $tweet->{'created_at'};
-  my $unixTime = str2time($timestamp);
+  my $unixTime = str2time($tweet->{'created_at'});
   my $tweetUrl      = 'https://twitter.com/' . $tweet->{'user'}->{'screen_name'} . '/status/' . $tweet->{'id_str'};
   my $tweetUrlPrint = 'https://twitter.com/'. color('magenta') . $tweet->{'user'}->{'screen_name'} . color('reset') . '/status/' .  color('yellow') . $tweet->{'id_str'} .  color('reset');
   
