@@ -6,7 +6,7 @@
     access_token_secret => 'Your Access Secret ...',
   },
   'anotherbot' => {
-   	consumer_key        => 'asdf', 
+    consumer_key        => 'asdf', 
     consumer_secret     => 'qwert',
     access_token        => 'top',
     access_token_secret => 'secret',
