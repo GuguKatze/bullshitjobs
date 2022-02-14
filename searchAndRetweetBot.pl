@@ -17,10 +17,11 @@ use JSON;
 ################
 ### <config> ###
 
-my $user          = 'bullshitjobstop';
+my $user          = 'bullshitjobspop';
 my $min_retweets  = 10;
 my $min_favorites = 10;
 my $q             = '#bullshitjobs OR bullshitjobs OR bullshit+jobs OR bullshit-jobs OR bullshit_jobs min_retweets:' . $min_retweets . ' OR min_faves:' . $min_favorites;
+my $interval      = 60 * 20; # seconds
 
 ### </config> ###
 #################
@@ -42,27 +43,39 @@ my $options = {
 
 my $tweetIds = {};
 my $max_id   = undef;
-do {
-  $max_id = getChunk($options, $max_id, $tweetIds);
-} while(defined $max_id);
-print dateTime() . ' Found ' . color('yellow') . scalar(keys(%{$tweetIds})) . color('reset') . ' potential tweets.' . "\n";
 
-#
-# The results from 'search/tweets' calls do not actually have the .retweeted field set. It's always false/0.
-# This is most likely to prevent search complexity explosions and we need to be doing 'statuses/lookup' calls
-# featuring the ids of our potential tweets. So we know whether we already retweeted them.
-#
-# Another solution would be to try to retweet them anyway and to look for the error.code == 327. Indicating that
-# the tweet got already retweeted by us. But I don't know whether this is considered "good practise" ...
-#
-# See https://twittercommunity.com/t/why-favorited-is-always-false-in-twitter-search-api-1-1/31826
-#
+#################
+### main loop ###
+#################
 
-my $tweetsToRetweet = filterRetweeted($tweetIds);
-print dateTime() . ' Retweeting ' . color('yellow') . scalar(keys(%{$tweetsToRetweet})) . color('reset') . ' tweets.' . "\n";
+while(1){
 
-retweetAction($tweetsToRetweet);
+  $tweetIds = {};
+  $max_id   = undef;
+  
+  do {
+    $max_id = getChunk($options, $max_id, $tweetIds);
+  } while(defined $max_id);
+  print dateTime() . ' Found ' . color('yellow') . scalar(keys(%{$tweetIds})) . color('reset') . ' potential tweets.' . "\n";
 
+  #
+  # The results from 'search/tweets' calls do not actually have the .retweeted field set. It's always false/0.
+  # This is most likely to prevent search complexity explosions and we need to be doing 'statuses/lookup' calls
+  # featuring the ids of our potential tweets. So we know whether we already retweeted them.
+  #
+  # Another solution would be to try to retweet them anyway and to look for the error.code == 327. Indicating that
+  # the tweet got already retweeted by us. But I don't know whether this is considered "good practise" ...
+  #
+  # See https://twittercommunity.com/t/why-favorited-is-always-false-in-twitter-search-api-1-1/31826
+  #
+
+  my $tweetsToRetweet = filterRetweeted($tweetIds);
+  print dateTime() . ' Retweeting ' . color('yellow') . scalar(keys(%{$tweetsToRetweet})) . color('reset') . ' tweets.' . "\n";
+  retweetAction($tweetsToRetweet);
+  
+  print dateTime() . ' Sleeping for ' . color('yellow') . $interval . color('reset') . ' seconds. (Next run sheduled for ' . dateTime(time() + $interval) . ')' . "\n";
+  sleep($interval);
+}
 
 ############
 ### subs ###
@@ -73,9 +86,7 @@ sub getChunk {
   my $max_id   = shift;
   $tweetIds    = shift;
   $options->{'max_id'} = $max_id if defined $max_id;
-  
   print dateTime() . ' max_id: ' . color('yellow') . (defined($max_id) ? $max_id : 'most recent' ) . color('reset') . '.' . "\n";
-  #print Dumper($options) . "\n";
   
   ############
   # API call #
@@ -104,7 +115,6 @@ sub isaGoodTweet {
   return 0 if $matches < 1;
 
   # We found a potential tweet!
-  
   my $timestamp =  $tweet->{'created_at'};
   my $unixTime = str2time($timestamp);
   my $tweetUrl      = 'https://twitter.com/' . $tweet->{'user'}->{'screen_name'} . '/status/' . $tweet->{'id_str'};
@@ -153,7 +163,7 @@ sub filterRetweeted {
 
 sub retweetAction {
   my $tweetIds = shift;
-  foreach my $id (sort {$a > $b} keys %{$tweetIds}){
+  foreach my $id (sort {$a <=> $b} keys %{$tweetIds}){
     print dateTime() . ' Retweeting tweet with id: ' . color('yellow') . $id .  color('reset') . '.' . "\n";
     ################
     ### API call ###
@@ -164,5 +174,7 @@ sub retweetAction {
 }
 
 sub dateTime{
-  return '[' . color('magenta') . scalar(localtime()) . color('reset') . ']';
+	my $unixtime = shift;
+	$unixtime = defined $unixtime ? $unixtime : time();
+  return '[' . color('magenta') . scalar(localtime($unixtime)) . color('reset') . ']';
 }
