@@ -71,7 +71,6 @@ sub getChunk {
   ############
   my $chunk = $client->get('search/tweets', $options);
   
-  my $unfilteredIds = {};
   foreach my $tweet (@{$chunk->{'statuses'}}){
     $tweetIds->{$tweet->{'id_str'}}++ if isaGoodTweet($tweet);
   }
