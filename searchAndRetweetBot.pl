@@ -13,21 +13,38 @@ use Twitter::API;
 use Term::ANSIColor;
 use Date::Parse;
 use JSON;
+use Getopt::Long;
 
-################
-### <config> ###
+my $interval      = 60 * 20; # interval between runs in seconds
 
-my $user          = 'bullshitjobspop';
-my $min_retweets  = 10;
-my $min_favorites = 10;
-my $q             = '#bullshitjobs OR bullshitjobs OR bullshit+jobs OR bullshit-jobs OR bullshit_jobs min_retweets:' . $min_retweets . ' OR min_faves:' . $min_favorites;
-my $interval      = 60 * 20; # seconds
 
-### </config> ###
-#################
+my $profile = undef;
+GetOptions( 'profile=s' => \$profile );
+if(!defined $profile){
+	die dateTime() . ' Please use the --profile=<name of profile> command line option to specify a usage profile. Aborting ...' . "\n";
+}
+
+my $user          = undef;
+my $min_retweets  = undef;
+my $min_favorites = undef;
+
+# configure your search profiles here
+if($profile eq 'pop'){
+  $user          = 'bullshitjobspop';
+  $min_retweets  = 10;
+  $min_favorites = 10;
+}elsif($profile eq 'top'){
+	$user          = 'bullshitjobstop';
+  $min_retweets  = 100;
+  $min_favorites = 100;
+}else{
+	die dateTime() . ' Unknown profile "' . $profile . '" specified via the --profile command line option: ' . $profile . '. Aborting ...' . "\n";
+}
+
+my $q = '#bullshitjobs OR bullshitjobs OR bullshit+jobs OR bullshit-jobs OR bullshit_jobs min_retweets:' . $min_retweets . ' OR min_faves:' . $min_favorites;
 
 my $credentials = do('./credentials.pl');
-die color('magenta') . dateTime() . color('reset') . ' No credentials found for user: ' . $user . '. Aborting.' . "\n" if !defined $credentials->{$user};
+die color('magenta') . dateTime() . color('reset') . ' No credentials found for user: ' . $user . '. Aborting ...' . "\n" if !defined $credentials->{$user};
 $credentials = $credentials->{$user};
 
 my $client = Twitter::API->new_with_traits(
@@ -144,6 +161,7 @@ sub filterRetweeted {
   my $spliceSize = 50;
   do{
     my @tmp = splice(@ids, 0, $spliceSize);
+    
     ############
     # API call #
     ############
@@ -160,10 +178,11 @@ sub retweetAction {
   my $ids = shift;
   foreach my $id (sort {$a <=> $b} keys %{$ids}){
     print dateTime() . ' Retweeting tweet with id: ' . color('yellow') . $id .  color('reset') . '.' . "\n";
+    
     ################
     ### API call ###
     ################
-    my $chunk = $client->post('statuses/retweet/' . $id);
+    #my $chunk = $client->post('statuses/retweet/' . $id);
     
     sleep(5); # Don't hammer the API ...
   }
