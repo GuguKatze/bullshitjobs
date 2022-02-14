@@ -36,11 +36,11 @@ if($profile eq 'pop'){
   $min_retweets  = 10;
   $min_favorites = 10;
 }elsif($profile eq 'top'){
-	$twitterUser   = 'bullshitjobstop';
+  $twitterUser   = 'bullshitjobstop';
   $min_retweets  = 100;
   $min_favorites = 100;
 }else{
-	die dateTime() . ' Unknown profile "' . $profile . '" specified via the --profile command line option: ' . $profile . '. Aborting ...' . "\n";
+  die dateTime() . ' Unknown profile "' . $profile . '" specified via the --profile command line option: ' . $profile . '. Aborting ...' . "\n";
 }
 
 #########################
