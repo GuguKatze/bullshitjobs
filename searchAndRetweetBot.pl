@@ -20,7 +20,7 @@ my $interval = 60 * 20; # interval between runs in seconds
 my $profile = undef;
 GetOptions( 'profile=s' => \$profile );
 if(!defined $profile){
-	die dateTime() . ' Please use the --profile=<name of profile> command line option to specify a usage profile. Aborting ...' . "\n";
+  die dateTime() . ' Please use the --profile=<name of profile> command line option to specify a usage profile. Aborting ...' . "\n";
 }
 
 my $twitterUser   = undef;
