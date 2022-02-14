@@ -17,7 +17,7 @@ use JSON;
 ################
 ### <config> ###
 
-my $user        = 'bullshitjobstop';
+my $user          = 'bullshitjobstop';
 my $min_retweets  = 10;
 my $min_favorites = 10;
 my $q             = '#bullshitjobs OR bullshitjobs OR bullshit+jobs OR bullshit-jobs OR bullshit_jobs min_retweets:' . $min_retweets . ' OR min_faves:' . $min_favorites;
