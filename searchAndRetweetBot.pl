@@ -26,7 +26,7 @@ my $q             = '#bullshitjobs OR bullshitjobs OR bullshit+jobs OR bullshit-
 #################
 
 my $credentials = do('./credentials.pl');
-die datatime() . ' No credentials found for user: ' . $user . '. Aborting.' . "\n" if !defined $credentials->{$user};
+die color('magenta') . dateTime() . color('reset') . ' No credentials found for user: ' . $user . '. Aborting.' . "\n" if !defined $credentials->{$user};
 $credentials = $credentials->{$user};
 
 my $client = Twitter::API->new_with_traits(
