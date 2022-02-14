@@ -45,7 +45,7 @@ my $max_id   = undef;
 do {
   $max_id = getChunk($options, $max_id, $tweetIds);
 } while(defined $max_id);
-print color('magenta') . dateTime() . color('reset') . ' Found ' . color('yellow') . scalar(keys(%{$tweetIds})) . color('reset') . ' potential tweets.' . "\n";
+print dateTime() . ' Found ' . color('yellow') . scalar(keys(%{$tweetIds})) . color('reset') . ' potential tweets.' . "\n";
 
 #
 # The results from 'search/tweets' calls do not actually have the .retweeted field set. It's always false/0.
@@ -59,7 +59,7 @@ print color('magenta') . dateTime() . color('reset') . ' Found ' . color('yellow
 #
 
 my $tweetsToRetweet = filterRetweeted($tweetIds);
-print color('magenta') . dateTime() . color('reset') . ' Retweeting ' . color('yellow') . scalar(keys(%{$tweetsToRetweet})) . color('reset') . ' tweets.' . "\n";
+print dateTime() . ' Retweeting ' . color('yellow') . scalar(keys(%{$tweetsToRetweet})) . color('reset') . ' tweets.' . "\n";
 
 retweetAction($tweetsToRetweet);
 
@@ -74,7 +74,7 @@ sub getChunk {
   $tweetIds    = shift;
   $options->{'max_id'} = $max_id if defined $max_id;
   
-  print color('magenta') . dateTime() . color('reset') . ' max_id: ' . color('yellow') . (defined($max_id) ? $max_id : 'most recent' ) . color('reset') . "\n";
+  print dateTime() . ' max_id: ' . color('yellow') . (defined($max_id) ? $max_id : 'most recent' ) . color('reset') . '.' . "\n";
   #print Dumper($options) . "\n";
   
   ############
@@ -108,7 +108,7 @@ sub isaGoodTweet {
   my $timestamp =  $tweet->{'created_at'};
   my $unixTime = str2time($timestamp);
   my $tweetUrl      = 'https://twitter.com/' . $tweet->{'user'}->{'screen_name'} . '/status/' . $tweet->{'id_str'};
-  my $tweetUrlPrint = 'https://twitter.com/'. color('magenta') . $tweet->{'user'}->{'screen_name'} . color('reset') . '/status/' . $tweet->{'id_str'};
+  my $tweetUrlPrint = 'https://twitter.com/'. color('magenta') . $tweet->{'user'}->{'screen_name'} . color('reset') . '/status/' .  color('yellow') . $tweet->{'id_str'} .  color('reset');
   
   my $retweetCount = $tweet->{'retweet_count'} >= $min_retweets ? color('green') . $tweet->{'retweet_count'} . color('reset') : $tweet->{'retweet_count'};
   my $favoriteCount = $tweet->{'favorite_count'} >= $min_favorites ? color('green') . $tweet->{'favorite_count'} . color('reset') : $tweet->{'favorite_count'};
@@ -145,12 +145,7 @@ sub filterRetweeted {
     ############
     my $chunk = $client->get('statuses/lookup', { trim_user => 1, id => join(',', @tmp) });
     foreach my $tweet (@{$chunk}){
-    	
-    	### 
-    	print Dumper($tweet->{'retweeted'}) . "\n"; # <------------ debugging the JSON::PP::Boolean issue ...
-    	###
-    	
-      $filteredTweetIds->{$tweet->{'id_str'}}++ if JSON::is_bool($tweet->{'retweeted'}) && JSON::false($tweet->{'retweeted'});
+      $filteredTweetIds->{$tweet->{'id_str'}}++ if JSON::is_bool($tweet->{'retweeted'}) && $tweet->{'retweeted'} == JSON::false;
     }
   } while(scalar @ids > 0);
   return $filteredTweetIds;
@@ -159,7 +154,7 @@ sub filterRetweeted {
 sub retweetAction {
   my $tweetIds = shift;
   foreach my $id (sort {$a > $b} keys %{$tweetIds}){
-    print print color('magenta') . dateTime() . color('reset') . ' Retweeting tweet with id: ' . $id . "\n";
+    print dateTime() . ' Retweeting tweet with id: ' . color('yellow') . $id .  color('reset') . '.' . "\n";
     ################
     ### API call ###
     ################
@@ -169,5 +164,5 @@ sub retweetAction {
 }
 
 sub dateTime{
-  return '[' . scalar(localtime()) . ']';
+  return '[' . color('magenta') . scalar(localtime()) . color('reset') . ']';
 }
