@@ -41,21 +41,13 @@ my $options = {
   count      => 100,
 };
 
-my $tweetIds = {};
-my $max_id   = undef;
-
 #################
 ### main loop ###
 #################
 
 while(1){
 
-  $tweetIds = {};
-  $max_id   = undef;
-  
-  do {
-    $max_id = getChunk($options, $max_id, $tweetIds);
-  } while(defined $max_id);
+  my $tweetIds = searchForTweets($options);
   print dateTime() . ' Found ' . color('yellow') . scalar(keys(%{$tweetIds})) . color('reset') . ' potential tweets.' . "\n";
 
   #
@@ -69,9 +61,9 @@ while(1){
   # See https://twittercommunity.com/t/why-favorited-is-always-false-in-twitter-search-api-1-1/31826
   #
 
-  my $tweetsToRetweet = filterRetweeted($tweetIds);
-  print dateTime() . ' Retweeting ' . color('yellow') . scalar(keys(%{$tweetsToRetweet})) . color('reset') . ' tweets.' . "\n";
-  retweetAction($tweetsToRetweet);
+  my $tweetIdsToRetweet = filterRetweeted($tweetIds);
+  print dateTime() . ' Retweeting ' . color('yellow') . scalar(keys(%{$tweetIdsToRetweet})) . color('reset') . ' tweets.' . "\n";
+  retweetAction($tweetIdsToRetweet);
   
   print dateTime() . ' Sleeping for ' . color('yellow') . $interval . color('reset') . ' seconds. (Next run sheduled for ' . dateTime(time() + $interval) . ')' . "\n";
   sleep($interval);
@@ -81,23 +73,25 @@ while(1){
 ### subs ###
 ############
 
-sub getChunk {
+sub searchForTweets {
   my $options  = shift;
-  my $max_id   = shift;
-  $tweetIds    = shift;
-  $options->{'max_id'} = $max_id if defined $max_id;
-  print dateTime() . ' max_id: ' . color('yellow') . (defined($max_id) ? $max_id : 'most recent' ) . color('reset') . '.' . "\n";
-  
-  ############
-  # API call #
-  ############
-  my $chunk = $client->get('search/tweets', $options);
-  
-  foreach my $tweet (@{$chunk->{'statuses'}}){
-    $tweetIds->{$tweet->{'id_str'}}++ if isaGoodTweet($tweet);
-  }
-  $max_id = (defined $chunk->{'search_metadata'}->{'next_results'} && $chunk->{'search_metadata'}->{'next_results'} =~ /max_id=(\d+)/i) ? $1 : undef;
-  return $max_id;
+  my $max_id   = undef;
+  my $ids      = {};
+  do{
+    $options->{'max_id'} = $max_id if defined $max_id;
+    print dateTime() . ' max_id: ' . color('yellow') . (defined($max_id) ? $max_id : 'most recent' ) . color('reset') . '.' . "\n";
+    
+    ############
+    # API call #
+    ############
+    my $chunk = $client->get('search/tweets', $options);
+    
+    foreach my $tweet (@{$chunk->{'statuses'}}){
+      $ids->{$tweet->{'id_str'}}++ if isaGoodTweet($tweet);
+    }
+    $max_id = (defined $chunk->{'search_metadata'}->{'next_results'} && $chunk->{'search_metadata'}->{'next_results'} =~ /max_id=(\d+)/i) ? $1 : undef;
+  } while (defined $max_id);
+  return $ids;
 }
 
 sub isaGoodTweet {
@@ -143,10 +137,10 @@ sub isaGoodTweet {
 }
 
 sub filterRetweeted {
-  my $tweetIds = shift;
-  my $filteredTweetIds = {};
+  my $ids = shift;
+  my $filteredIds = {};
 
-  my @ids = keys %{$tweetIds};
+  my @ids = keys %{$ids};
   my $spliceSize = 50;
   do{
     my @tmp = splice(@ids, 0, $spliceSize);
@@ -154,27 +148,29 @@ sub filterRetweeted {
     # API call #
     ############
     my $chunk = $client->get('statuses/lookup', { trim_user => 1, id => join(',', @tmp) });
+    
     foreach my $tweet (@{$chunk}){
-      $filteredTweetIds->{$tweet->{'id_str'}}++ if JSON::is_bool($tweet->{'retweeted'}) && $tweet->{'retweeted'} == JSON::false;
+      $filteredIds->{$tweet->{'id_str'}}++ if JSON::is_bool($tweet->{'retweeted'}) && $tweet->{'retweeted'} == JSON::false;
     }
   } while(scalar @ids > 0);
-  return $filteredTweetIds;
+  return $filteredIds;
 }
 
 sub retweetAction {
-  my $tweetIds = shift;
-  foreach my $id (sort {$a <=> $b} keys %{$tweetIds}){
+  my $ids = shift;
+  foreach my $id (sort {$a <=> $b} keys %{$ids}){
     print dateTime() . ' Retweeting tweet with id: ' . color('yellow') . $id .  color('reset') . '.' . "\n";
     ################
     ### API call ###
     ################
     my $chunk = $client->post('statuses/retweet/' . $id);
+    
     sleep(5); # Don't hammer the API ...
   }
 }
 
 sub dateTime{
-	my $unixtime = shift;
-	$unixtime = defined $unixtime ? $unixtime : time();
+  my $unixtime = shift;
+  $unixtime = defined $unixtime ? $unixtime : time();
   return '[' . color('magenta') . scalar(localtime($unixtime)) . color('reset') . ']';
 }
