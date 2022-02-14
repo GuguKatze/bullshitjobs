@@ -105,9 +105,10 @@ sub searchForTweets {
   my $max_id   = undef;
   my $ids      = {};
   do{
-    $options->{'max_id'} = $max_id if defined $max_id;
+    $options->{'max_id'} = $max_id;
+    delete $options->{'max_id'} if !defined $options->{'max_id'};   
     print dateTime() . ' max_id: ' . color('yellow') . (defined($max_id) ? $max_id : 'most recent' ) . color('reset') . '.' . "\n";
-    
+ 
     ################
     ### API call ###
     ################
@@ -131,8 +132,8 @@ sub isaGoodTweet {
   
   my $tweetText = defined $tweet->{'retweeted_status'} ? $tweet->{'retweeted_status'}->{'full_text'} : $tweet->{'full_text'};  
   my $matches = 0;
-  $matches ++ if $tweetText =~ /bullshit[\s\_\-]jobs/i;
-  $matches ++ if $tweetText =~ /#bullshitjobs/i;
+  $matches++ if $tweetText =~ /bullshit[\s\_\-]jobs/i;
+  $matches++ if $tweetText =~ /#bullshitjobs/i;
   return 0 if $matches < 1;
 
   # We found a potential tweet!
