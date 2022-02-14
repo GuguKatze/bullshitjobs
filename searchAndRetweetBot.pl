@@ -182,7 +182,7 @@ sub retweetAction {
     ################
     ### API call ###
     ################
-    #my $chunk = $client->post('statuses/retweet/' . $id);
+    my $chunk = $client->post('statuses/retweet/' . $id);
     
     sleep(5); # Don't hammer the API ...
   }
