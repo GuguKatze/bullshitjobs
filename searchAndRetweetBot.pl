@@ -83,7 +83,7 @@ while(1){
   # featuring the ids of our potential tweets. So we know whether we already retweeted them.
   #
   # Another solution would be to try to retweet them anyway and to look for the error.code == 327. Indicating that
-  # the tweet got already retweeted by us. But I don't know whether this is considered "good practise" ...
+  # the tweet got already retweeted by us. But I don't know whether this is considered "good practice" ...
   #
   # See https://twittercommunity.com/t/why-favorited-is-always-false-in-twitter-search-api-1-1/31826
   #
@@ -108,9 +108,9 @@ sub searchForTweets {
     $options->{'max_id'} = $max_id if defined $max_id;
     print dateTime() . ' max_id: ' . color('yellow') . (defined($max_id) ? $max_id : 'most recent' ) . color('reset') . '.' . "\n";
     
-    ############
-    # API call #
-    ############
+    ################
+    ### API call ###
+    ################
     my $chunk = $client->get('search/tweets', $options);
     
     foreach my $tweet (@{$chunk->{'statuses'}}){
@@ -172,9 +172,9 @@ sub filterRetweeted {
   do{
     my @tmp = splice(@ids, 0, $spliceSize);
     
-    ############
-    # API call #
-    ############
+    ################
+    ### API call ###
+    ################
     my $chunk = $client->get('statuses/lookup', { trim_user => 1, id => join(',', @tmp) });
     
     foreach my $tweet (@{$chunk}){
